@@ -1,10 +1,11 @@
 package com.terheyden;
 
-import javax.annotation.Nonnull;
-import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
+
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 @ParametersAreNonnullByDefault
 public class User implements Serializable {
@@ -75,3 +76,4 @@ public class User implements Serializable {
         return Objects.hash(id, name, age);
     }
 }
+

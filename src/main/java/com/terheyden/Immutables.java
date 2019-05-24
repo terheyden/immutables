@@ -78,6 +78,7 @@ public enum Immutables
     /**
      * https://stackoverflow.com/questions/29828829/extending-an-immutablemap-with-additional-or-new-values
      */
+    @Nonnull
     public static <K, V> ImmutableMap<K, V> addToMap(
         ImmutableMap<? extends K, ? extends V> sourceMap,
         K key,
@@ -89,6 +90,7 @@ public enum Immutables
             .build();
     }
 
+    @Nonnull
     public static <K, V> ImmutableMap<K, V> removeMapKey(
         ImmutableMap<? extends K, ? extends V> sourceMap,
         K key)
@@ -102,11 +104,13 @@ public enum Immutables
         return builder.build();
     }
 
+    @Nonnull
     public static <K, V> Map<K, V> toHashMap(ImmutableMap<? extends K, ? extends V> sourceMap)
     {
         return new HashMap<>(sourceMap);
     }
 
+    @Nonnull
     public static <K, V> ImmutableMap<K, V> toImmutableMap(Map<? extends K, ? extends V> sourceMap)
     {
         return ImmutableMap.copyOf(sourceMap);
@@ -116,6 +120,7 @@ public enum Immutables
     ////////////////////////////////////////
     // SORTEDMAP<K, V>
 
+    @Nonnull
     public static <K extends Comparable<?>, V> ImmutableSortedMap<K, V> addToSortedMap(
         ImmutableSortedMap<? extends K, ? extends V> sourceMap,
         K key,
@@ -127,6 +132,7 @@ public enum Immutables
             .build();
     }
 
+    @Nonnull
     public static <K extends Comparable<?>, V> ImmutableSortedMap<K, V> removeSortedMapKey(
         ImmutableSortedMap<? extends K, ? extends V> sourceMap,
         K key)
@@ -140,11 +146,13 @@ public enum Immutables
         return builder.build();
     }
 
+    @Nonnull
     public static <K extends Comparable<?>, V> SortedMap<K, V> toSortedTreeMap(ImmutableSortedMap<? extends K, ? extends V> sourceMap)
     {
         return new TreeMap<K, V>(sourceMap);
     }
 
+    @Nonnull
     public static <K extends Comparable<?>, V> ImmutableSortedMap<K, V> toImmutableSortedMap(Map<? extends K, ? extends V> sourceMap)
     {
         return ImmutableSortedMap.copyOf(sourceMap);
@@ -157,6 +165,7 @@ public enum Immutables
     /**
      * https://stackoverflow.com/questions/29828829/extending-an-immutablemap-with-additional-or-new-values
      */
+    @Nonnull
     public static <K, V> Map<K, List<V>> toHashMapArrayList(ImmutableMap<? extends K, ? extends ImmutableList<V>> sourceMap)
     {
         return sourceMap.entrySet().stream()
@@ -165,6 +174,7 @@ public enum Immutables
                 entry -> new ArrayList<V>(entry.getValue())));
     }
 
+    @Nonnull
     public static <K, V> ImmutableMap<K, ImmutableList<V>> toImmutableMapList(Map<? extends K, ? extends List<V>> sourceMap)
     {
         ImmutableMap.Builder<K, ImmutableList<V>> builder = ImmutableMap.builder();
@@ -178,6 +188,7 @@ public enum Immutables
      * https://www.baeldung.com/java-stream-append-prepend
      * https://stackoverflow.com/questions/39441096/how-to-put-an-entry-into-a-map
      */
+    @Nonnull
     public static <K, V> ImmutableMap<K, ImmutableList<V>> addToMapList(
         ImmutableMap<K, ImmutableList<V>> sourceMap,
         K key,
@@ -204,6 +215,7 @@ public enum Immutables
     /**
      * https://www.baeldung.com/java-stream-immutable-collection
      */
+    @Nonnull
     public static <K, V> ImmutableMap<K, ImmutableList<V>> removeMapListValue(
         ImmutableMap<K, ImmutableList<V>> sourceMap,
         K key,
@@ -238,6 +250,7 @@ public enum Immutables
     /**
      * https://stackoverflow.com/questions/29828829/extending-an-immutablemap-with-additional-or-new-values
      */
+    @Nonnull
     public static <K extends Comparable<?>, V> Map<K, List<V>> toSortedTreeMapArrayList(ImmutableSortedMap<? extends K, ? extends ImmutableList<V>> sourceMap)
     {
         return sourceMap.entrySet().stream()
@@ -246,6 +259,7 @@ public enum Immutables
                 entry -> new ArrayList<V>(entry.getValue())));
     }
 
+    @Nonnull
     public static <K extends Comparable<?>, V> ImmutableSortedMap<K, ImmutableList<V>> toImmutableSortedMapList(Map<? extends K, ? extends List<V>> sourceMap)
     {
         ImmutableSortedMap.Builder<K, ImmutableList<V>> builder = ImmutableSortedMap.naturalOrder();
@@ -259,6 +273,7 @@ public enum Immutables
      * https://www.baeldung.com/java-stream-append-prepend
      * https://stackoverflow.com/questions/39441096/how-to-put-an-entry-into-a-map
      */
+    @Nonnull
     public static <K extends Comparable<?>, V> ImmutableSortedMap<K, ImmutableList<V>> addToSortedMapList(
         ImmutableSortedMap<K, ImmutableList<V>> sourceMap,
         K key,
@@ -288,6 +303,7 @@ public enum Immutables
     /**
      * https://www.baeldung.com/java-stream-immutable-collection
      */
+    @Nonnull
     public static <K extends Comparable<?>, V> ImmutableSortedMap<K, ImmutableList<V>> removeSortedMapListValue(
         ImmutableSortedMap<K, ImmutableList<V>> sourceMap,
         K key,
