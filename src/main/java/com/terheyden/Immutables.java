@@ -4,16 +4,12 @@ import static com.google.common.base.Predicates.in;
 import static com.google.common.base.Predicates.not;
 import static java.util.Arrays.asList;
 
-import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -21,8 +17,11 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.ImmutableSortedMap;
-import com.google.common.collect.Ordering;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
+import com.google.common.collect.SetMultimap;
 
 /**
  * Utility methods for working with immutable classes.
@@ -91,7 +90,7 @@ public enum Immutables
     }
 
     @Nonnull
-    public static <K, V> ImmutableMap<K, V> removeMapKey(
+    public static <K, V> ImmutableMap<K, V> removeFromMap(
         ImmutableMap<? extends K, ? extends V> sourceMap,
         K key)
     {
@@ -133,7 +132,7 @@ public enum Immutables
     }
 
     @Nonnull
-    public static <K extends Comparable<?>, V> ImmutableSortedMap<K, V> removeSortedMapKey(
+    public static <K extends Comparable<?>, V> ImmutableSortedMap<K, V> removeFromSortedMap(
         ImmutableSortedMap<? extends K, ? extends V> sourceMap,
         K key)
     {
@@ -153,182 +152,82 @@ public enum Immutables
     }
 
     @Nonnull
-    public static <K extends Comparable<?>, V> ImmutableSortedMap<K, V> toImmutableSortedMap(Map<? extends K, ? extends V> sourceMap)
+    public static <K extends Comparable<?>, V> ImmutableSortedMap<K, V> toImmutableSortedMap(
+        Map<? extends K, ? extends V> sourceMap)
     {
         return ImmutableSortedMap.copyOf(sourceMap);
     }
 
 
     ////////////////////////////////////////
-    // MAP<K, LIST<V>>
+    // SETMULTIMAP<K, V>
 
-    /**
-     * https://stackoverflow.com/questions/29828829/extending-an-immutablemap-with-additional-or-new-values
-     */
     @Nonnull
-    public static <K, V> Map<K, List<V>> toHashMapArrayList(ImmutableMap<? extends K, ? extends ImmutableList<V>> sourceMap)
+    public static <K extends Comparable<?>, V> ImmutableSetMultimap<K, V> addToSetMultimap(
+        ImmutableSetMultimap<? extends K, ? extends V> sourceMap,
+        K newKey,
+        V newVal)
     {
-        return sourceMap.entrySet().stream()
-            .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                entry -> new ArrayList<V>(entry.getValue())));
+        return new ImmutableSetMultimap.Builder<K, V>()
+            .putAll(sourceMap)
+            .put(newKey, newVal)
+            .build();
     }
 
     @Nonnull
-    public static <K, V> ImmutableMap<K, ImmutableList<V>> toImmutableMapList(Map<? extends K, ? extends List<V>> sourceMap)
+    public static <K extends Comparable<?>, V> ImmutableSetMultimap<K, V> removeFromSetMultimap(
+        ImmutableSetMultimap<? extends K, ? extends V> sourceMap,
+        MultimapBuilder.SetMultimapBuilder<? super K, ? super V> builder,
+        K oldKey,
+        V oldVal)
     {
-        ImmutableMap.Builder<K, ImmutableList<V>> builder = ImmutableMap.builder();
+        SetMultimap<? extends K, ? extends V> tmpMap = builder.build(sourceMap);
 
-        sourceMap.forEach((key, listVal) -> builder.put(key, ImmutableList.copyOf(listVal)));
+        tmpMap.remove(oldKey, oldVal);
 
-        return builder.build();
+        return new ImmutableSetMultimap.Builder<K, V>()
+            .putAll(tmpMap)
+            .build();
+    }
+
+    @Nonnull
+    public static <K, V> ImmutableSetMultimap<K, V> toImmutableSetMultimap(Multimap<? extends K, ? extends V> sourceMap)
+    {
+        return ImmutableSetMultimap.copyOf(sourceMap);
+    }
+
+    @Nonnull
+    public static <K, V> SetMultimap<K, V> toSetMultimap(
+        ImmutableSetMultimap<K, V> sourceMap,
+        MultimapBuilder.SetMultimapBuilder<K, V> builder)
+    {
+        return builder.build(sourceMap);
     }
 
     /**
-     * https://www.baeldung.com/java-stream-append-prepend
-     * https://stackoverflow.com/questions/39441096/how-to-put-an-entry-into-a-map
+     * When making a general multimap builder, it must always be
+     * of type Comparable and Object. Only when build() gets called
+     * does it get cast to the final types.
      */
     @Nonnull
-    public static <K, V> ImmutableMap<K, ImmutableList<V>> addToMapList(
-        ImmutableMap<K, ImmutableList<V>> sourceMap,
-        K key,
-        V val)
+    private static MultimapBuilder.SetMultimapBuilder<Comparable, Object> newMapBuilder()
     {
-        // Create or update the (key, val) entry.
-
-        Stream<V> oldItems = Optional.ofNullable(sourceMap.get(key))
-            .orElse(ImmutableList.of())
-            .stream();
-
-        ImmutableList<V> newList = Stream.concat(oldItems, Stream.of(val))
-            .collect(ImmutableList.toImmutableList());
-
-        // Filter out the old (key, val).
-        Stream<Map.Entry<K, ImmutableList<V>>> oldMap = sourceMap.entrySet().stream()
-            .filter(entry -> !entry.getKey().equals(key));
-
-        return Stream
-            .concat(oldMap, Stream.of(new SimpleImmutableEntry<>(key, newList)))
-            .collect(ImmutableMap.toImmutableMap(Map.Entry::getKey, Map.Entry::getValue));
-    }
-
-    /**
-     * https://www.baeldung.com/java-stream-immutable-collection
-     */
-    @Nonnull
-    public static <K, V> ImmutableMap<K, ImmutableList<V>> removeMapListValue(
-        ImmutableMap<K, ImmutableList<V>> sourceMap,
-        K key,
-        V val)
-    {
-        if (!sourceMap.containsKey(key) || !sourceMap.get(key).contains(val))
-        {
-            // Nothing to remove.
-            return sourceMap;
-        }
-
-        ImmutableMap.Builder<K, ImmutableList<V>> mapBuilder = ImmutableMap.builder();
-
-        // Copy all old map entries, except for (key, val), which we want to change.
-        sourceMap.entrySet().stream()
-            .filter(entry -> !entry.getKey().equals(key))
-            .forEach(mapBuilder::put);
-
-        // Filter and add the (key, val) entry.
-        ImmutableList<V> filteredKeyList = sourceMap.get(key).stream()
-            .filter(v -> !v.equals(val))
-            .collect(ImmutableList.toImmutableList());
-
-        mapBuilder.put(key, filteredKeyList);
-
-        return mapBuilder.build();
+        return MultimapBuilder.SetMultimapBuilder
+            .treeKeys()
+            .hashSetValues();
     }
 
     ////////////////////////////////////////
-    // SORTEDMAP<K, LIST<V>>
 
-    /**
-     * https://stackoverflow.com/questions/29828829/extending-an-immutablemap-with-additional-or-new-values
-     */
     @Nonnull
-    public static <K extends Comparable<?>, V> Map<K, List<V>> toSortedTreeMapArrayList(ImmutableSortedMap<? extends K, ? extends ImmutableList<V>> sourceMap)
+    public static ImmutableBuilder builder()
     {
-        return sourceMap.entrySet().stream()
-            .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                entry -> new ArrayList<V>(entry.getValue())));
+        return new ImmutableBuilder();
     }
 
     @Nonnull
-    public static <K extends Comparable<?>, V> ImmutableSortedMap<K, ImmutableList<V>> toImmutableSortedMapList(Map<? extends K, ? extends List<V>> sourceMap)
+    public static ImmutableBuilder from(Multimap srcMap)
     {
-        ImmutableSortedMap.Builder<K, ImmutableList<V>> builder = ImmutableSortedMap.naturalOrder();
-
-        sourceMap.forEach((key, listVal) -> builder.put(key, ImmutableList.copyOf(listVal)));
-
-        return builder.build();
-    }
-
-    /**
-     * https://www.baeldung.com/java-stream-append-prepend
-     * https://stackoverflow.com/questions/39441096/how-to-put-an-entry-into-a-map
-     */
-    @Nonnull
-    public static <K extends Comparable<?>, V> ImmutableSortedMap<K, ImmutableList<V>> addToSortedMapList(
-        ImmutableSortedMap<K, ImmutableList<V>> sourceMap,
-        K key,
-        V val)
-    {
-        // Create or update the (key, val) entry.
-
-        Stream<V> oldItems = Optional.ofNullable(sourceMap.get(key))
-            .orElse(ImmutableList.of())
-            .stream();
-
-        ImmutableList<V> newList = Stream.concat(oldItems, Stream.of(val))
-            .collect(ImmutableList.toImmutableList());
-
-        // Filter out the old (key, val).
-        Stream<Map.Entry<K, ImmutableList<V>>> oldMap = sourceMap.entrySet().stream()
-            .filter(entry -> !entry.getKey().equals(key));
-
-        return Stream
-            .concat(oldMap, Stream.of(new SimpleImmutableEntry<>(key, newList)))
-            .collect(ImmutableSortedMap.toImmutableSortedMap(
-                Ordering.natural(),
-                Map.Entry::getKey,
-                Map.Entry::getValue));
-    }
-
-    /**
-     * https://www.baeldung.com/java-stream-immutable-collection
-     */
-    @Nonnull
-    public static <K extends Comparable<?>, V> ImmutableSortedMap<K, ImmutableList<V>> removeSortedMapListValue(
-        ImmutableSortedMap<K, ImmutableList<V>> sourceMap,
-        K key,
-        V val)
-    {
-        if (!sourceMap.containsKey(key) || !sourceMap.get(key).contains(val))
-        {
-            // Nothing to remove.
-            return sourceMap;
-        }
-
-        ImmutableSortedMap.Builder<K, ImmutableList<V>> mapBuilder = ImmutableSortedMap.naturalOrder();
-
-        // Copy all old map entries, except for (key, val), which we want to change.
-        sourceMap.entrySet().stream()
-            .filter(entry -> !entry.getKey().equals(key))
-            .forEach(mapBuilder::put);
-
-        // Filter and add the (key, val) entry.
-        ImmutableList<V> filteredKeyList = sourceMap.get(key).stream()
-            .filter(v -> !v.equals(val))
-            .collect(ImmutableList.toImmutableList());
-
-        mapBuilder.put(key, filteredKeyList);
-
-        return mapBuilder.build();
+        return new ImmutableBuilder(srcMap);
     }
 }

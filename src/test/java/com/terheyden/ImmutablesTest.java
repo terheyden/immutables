@@ -1,11 +1,8 @@
 package com.terheyden;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +10,7 @@ import java.util.SortedMap;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.UnmodifiableIterator;
 
@@ -72,7 +70,7 @@ class ImmutablesTest
         assertEquals(3, map4.size());
 
         // Removing from an immutable map:
-        ImmutableMap<String, User> map5 = Immutables.removeMapKey(map4, "Cora");
+        ImmutableMap<String, User> map5 = Immutables.removeFromMap(map4, "Cora");
         assertEquals(2, map5.size());
     }
 
@@ -108,7 +106,7 @@ class ImmutablesTest
         assertEquals(3, map3.size());
 
         // Removing from an immutable map:
-        ImmutableSortedMap<String, User> map4 = Immutables.removeSortedMapKey(map3, "Cora");
+        ImmutableSortedMap<String, User> map4 = Immutables.removeFromSortedMap(map3, "Cora");
         assertEquals(2, map4.size());
 
         // Adding to an immutable map:
@@ -117,104 +115,19 @@ class ImmutablesTest
     }
 
     @Test
-    public void testMapList()
+    public void testSetMultimap()
     {
-        User user1 = new User("Cora", 8);
-        User user2 = new User("Tashi", 11);
+        User user1 = new User("Tashi", 11);
+        User user2 = new User("Cora", 8);
         User user3 = new User("Mika", 12);
 
-        ImmutableMap<String, ImmutableList<User>> maplist1 = ImmutableMap.of(
-            "Mika",
-            ImmutableList.of(user3));
+        // These are not sorted.
+        ImmutableSetMultimap<String, User> map1 = ImmutableSetMultimap.of(
+            "Tashi", user1,
+            "Cora", user2);
 
-        // From immutable to mutable:
-        Map<String, List<User>> maplist2 = Immutables.toHashMapArrayList(maplist1);
-        maplist2.put("Cora", Collections.singletonList(user1));
-        assertEquals(2, maplist2.size());
-        assertTrue(maplist2.containsKey("Mika"));
-        assertTrue(maplist2.containsKey("Cora"));
-
-        maplist2.put("cats", Arrays.asList(user1, user2));
-
-        // From mutable to immutable:
-        ImmutableMap<String, ImmutableList<User>> cats1 = Immutables.toImmutableMapList(maplist2);
-        assertEquals(3, cats1.size());
-        assertEquals(2, cats1.get("cats").size());
-
-        // Add in-place:
-        ImmutableMap<String, ImmutableList<User>> cats2 = Immutables.addToMapList(cats1, "cats", user3);
-        assertEquals(3, cats2.size());
-        assertEquals(3, cats2.get("cats").size());
-
-        // Remove in-place:
-        ImmutableMap<String, ImmutableList<User>> cats3 = Immutables.removeMapListValue(cats2, "cats", user1);
-        assertEquals(3, cats3.size());
-        assertEquals(2, cats3.get("cats").size());
-
-        // Removing all items from a list just leaves an empty list behind:
-        ImmutableMap<String, ImmutableList<User>> cats4 = Immutables.removeMapListValue(cats3, "Mika", user3);
-        assertEquals(3, cats4.size());
-        assertTrue(cats4.get("Mika").isEmpty());
-
-        // Remove an entire key:
-        ImmutableMap<String, ImmutableList<User>> cats5 = Immutables.removeMapKey(cats3, "Mika");
-        assertEquals(2, cats5.size());
-        assertFalse(cats5.containsKey("Mika"));
+        ImmutableSetMultimap<String, User> map2 = Immutables.addToSetMultimap(map1, "Mika", user3);
+        assertEquals(3, map2.entries().size());
     }
 
-    @Test
-    public void testSortedMapList()
-    {
-        User user1 = new User("Cora", 8);
-        User user2 = new User("Tashi", 11);
-        User user3 = new User("Mika", 12);
-
-        ImmutableSortedMap<String, ImmutableList<User>> maplist1 = ImmutableSortedMap.of(
-            "Tashi", ImmutableList.of(user2),
-        "Mika", ImmutableList.of(user3));
-
-        // From immutable to mutable:
-        Map<String, List<User>> maplist2 = Immutables.toSortedTreeMapArrayList(maplist1);
-
-        assertEquals(2, maplist2.size());
-
-        // Verify sorting:
-        Iterator<Map.Entry<String, List<User>>> iter2 = maplist2.entrySet().iterator();
-        assertEquals("Mika", iter2.next().getKey());
-        assertEquals("Tashi", iter2.next().getKey());
-
-        maplist2.put("cats", Arrays.asList(user1, user2));
-
-        // From mutable to immutable:
-        ImmutableSortedMap<String, ImmutableList<User>> cats1 = Immutables.toImmutableSortedMapList(maplist2);
-        assertEquals(3, cats1.size());
-        assertEquals(2, cats1.get("cats").size());
-
-        // Add in-place:
-        ImmutableSortedMap<String, ImmutableList<User>> cats2 = Immutables.addToSortedMapList(cats1, "cats", user3);
-        assertEquals(3, cats2.size());
-        assertEquals(3, cats2.get("cats").size());
-
-        // Remove in-place:
-        ImmutableSortedMap<String, ImmutableList<User>> cats3 = Immutables.removeSortedMapListValue(cats2, "cats", user1);
-        assertEquals(3, cats3.size());
-        assertEquals(2, cats3.get("cats").size());
-
-        // Removing all items from a list just leaves an empty list behind:
-        ImmutableSortedMap<String, ImmutableList<User>> cats4 = Immutables.removeSortedMapListValue(cats3, "Mika", user3);
-        assertEquals(3, cats4.size());
-        assertTrue(cats4.get("Mika").isEmpty());
-
-        // Verify sorting:
-        // Uppercase is naturally higher than lower.
-        UnmodifiableIterator<Map.Entry<String, ImmutableList<User>>> iter4 = cats4.entrySet().iterator();
-        assertEquals("Mika", iter4.next().getKey());
-        assertEquals("Tashi", iter4.next().getKey());
-        assertEquals("cats", iter4.next().getKey());
-
-        // Remove an entire key:
-        ImmutableSortedMap<String, ImmutableList<User>> cats5 = Immutables.removeSortedMapKey(cats3, "Mika");
-        assertEquals(2, cats5.size());
-        assertFalse(cats5.containsKey("Mika"));
-    }
 }
